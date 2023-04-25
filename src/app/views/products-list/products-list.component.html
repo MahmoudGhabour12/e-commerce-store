@@ -1,0 +1,163 @@
+<p-toast></p-toast>
+<div class="card m-2">
+  <p-table
+    class="m-2"
+    responsiveLayout="stack"
+    #dt
+    [value]="products"
+    [rows]="10"
+    [paginator]="true"
+    [globalFilterFields]="['title', 'price', 'category']"
+    [(selection)]="selectedProducts"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [loading]="loading"
+    [totalRecords]="totalRecords"
+    (onLazyLoad)="loadProducts($event)"
+    [lazy]="true"
+  >
+    <ng-template pTemplate="caption">
+      <p-toolbar>
+        <ng-template pTemplate="right">
+          <button
+            pButton
+            pRipple
+            label="{{ 'ADD' | translate }}"
+            icon="pi pi-plus"
+            class="p-button-success mr-2"
+            (click)="openNew()"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="{{ 'DELETE' | translate }}"
+            icon="pi pi-trash"
+            class="p-button-danger"
+            (click)="deleteSelectedProducts()"
+            [disabled]="!selectedProducts || !selectedProducts.length"
+          ></button>
+        </ng-template>
+
+        <ng-template pTemplate="left">
+          <h5 class="m-1">{{ 'PRODUCTS' | translate }}</h5>
+
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal($event.target.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span> </ng-template
+      ></p-toolbar>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 4rem">
+          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        </th>
+        <th pSortableColumn="title">{{ 'NAME' | translate }} <p-sortIcon field="title"></p-sortIcon></th>
+        <th>{{ 'IMAGE' | translate }}</th>
+        <th pSortableColumn="price">{{ 'PRICE' | translate }} <p-sortIcon field="price"></p-sortIcon></th>
+        <th pSortableColumn="category">{{ 'CATEGORY' | translate }} <p-sortIcon field="category"></p-sortIcon></th>
+        <th>{{ 'RATING' | translate }}</th>
+
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-product>
+      <tr>
+        <td>
+          <p-tableCheckbox [value]="product"></p-tableCheckbox>
+        </td>
+        <td>{{ product.title }}</td>
+        <td><img [src]="product.image" [alt]="product.name" width="50" class="shadow-4" /></td>
+        <td>{{ product.price | currency : 'USD' }}</td>
+        <td>{{ product.category }}</td>
+        <td><p-rating [ngModel]="product.rating.rate" [readonly]="true" [cancel]="false"></p-rating></td>
+
+        <td>
+          <button
+            pButton
+            pRipple
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-success mr-2"
+            (click)="editProduct(product)"
+          ></button>
+          <button
+            pButton
+            pRipple
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-warning"
+            (click)="deleteProduct(product)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [(visible)]="productDialog"
+  [style]="{ width: '450px' }"
+  header="{{ 'PRODUCT_DETAILS' | translate }}"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <img [src]="product.image" [alt]="product.image" class="product-image" *ngIf="product.image" />
+    <div class="field">
+      <label for="title">{{ 'NAME' | translate }}</label>
+      <input type="text" pInputText id="title" [(ngModel)]="product.title" required autofocus />
+      <small class="p-error" *ngIf="submitted && !product.title">{{ 'NAME_IS_REQUIRED' | translate }}</small>
+    </div>
+    <div class="field">
+      <label for="category">{{ 'CATEGORY' | translate }}</label>
+      <p-dropdown
+        [(ngModel)]="product.category"
+        inputId="category"
+        [options]="categories"
+        placeholder="Select"
+        appendTo="body"
+      >
+        <ng-template let-option pTemplate="item">
+          <span>{{ option }}</span>
+        </ng-template>
+      </p-dropdown>
+    </div>
+    <div class="field">
+      <label for="price">{{ 'PRICE' | translate }}</label>
+      <p-inputNumber
+        id="price"
+        [(ngModel)]="product.price"
+        mode="currency"
+        currency="USD"
+        locale="en-US"
+      ></p-inputNumber>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      label="{{ 'CANCEL' | translate }}"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="{{ 'SAVE' | translate }}"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="saveProduct()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
