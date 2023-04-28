@@ -12,6 +12,7 @@ import { AuthService } from 'services/auth.service';
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit, OnDestroy {
+  title = 'Login page';
   loginForm: FormGroup;
   loading = false;
   submitted = false;
@@ -57,7 +58,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.submitted = true;
 
     // stop here if form is invalid
-    if (this.loginForm.invalid) {
+    if (this.loginForm?.invalid) {
       return;
     }
 

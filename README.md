@@ -2,26 +2,24 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.0.4.
 
-## Development server
+- First clone this project.
+- Second use `yarn` to download dependencies.
+- Run `ng serve` or `yarn start` for a dev server. Navigate to `http://localhost:4200/`.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Detailed about this project
 
-## Code scaffolding
+It contains simple ui for login page and have roles for each user that logged in and products lists with crud operations.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- I've used (https://fakestoreapi.com) to get api for products and categories.
+  - admin role have authorization to add new products, update product and delete products.
+  - user role have authorization to see products depends on selected category.
 
-## Build
+## For login
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+- Username: admin , Password : admin ==> for admin.
+- Username: user , Password : user ==> for user.
 
 ## Running unit tests
 
 Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+I applied the test on the login component.
