@@ -1,13 +1,14 @@
 <p-toast></p-toast>
-<div class="card m-2">
+<div class="card m-2" #displayTable>
   <p-table
+    *ngIf="products.length"
     class="m-2"
     responsiveLayout="stack"
     #dt
     [value]="products"
     [rows]="10"
     [paginator]="true"
-    [globalFilterFields]="['title', 'price', 'category']"
+    [globalFilterFields]="['title', 'price', 'category', 'rating.rate']"
     [(selection)]="selectedProducts"
     [rowHover]="true"
     dataKey="id"
@@ -15,19 +16,18 @@
     [showCurrentPageReport]="true"
     [loading]="loading"
     [totalRecords]="totalRecords"
-    (onLazyLoad)="loadProducts($event)"
-    [lazy]="true"
+    styleClass="p-datatable-gridlines"
   >
     <ng-template pTemplate="caption">
       <p-toolbar>
-        <ng-template pTemplate="right">
+        <div class="form-group col-12 d-flex justify-content-end flex-column flex-sm-row mt-2">
           <button
             pButton
             pRipple
             label="{{ 'ADD' | translate }}"
             icon="pi pi-plus"
             class="p-button-success mr-2"
-            (click)="openNew()"
+            (click)="addProduct()"
           ></button>
           <button
             pButton
@@ -38,32 +38,41 @@
             (click)="deleteSelectedProducts()"
             [disabled]="!selectedProducts || !selectedProducts.length"
           ></button>
-        </ng-template>
-
-        <ng-template pTemplate="left">
-          <h5 class="m-1">{{ 'PRODUCTS' | translate }}</h5>
-
-          <span class="p-input-icon-left">
-            <i class="pi pi-search"></i>
-            <input
-              pInputText
-              type="text"
-              (input)="dt.filterGlobal($event.target.value, 'contains')"
-              placeholder="Search..."
-            />
-          </span> </ng-template
-      ></p-toolbar>
+        </div>
+      </p-toolbar>
     </ng-template>
     <ng-template pTemplate="header">
       <tr>
         <th style="width: 4rem">
           <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
         </th>
-        <th pSortableColumn="title">{{ 'NAME' | translate }} <p-sortIcon field="title"></p-sortIcon></th>
+        <th>
+          <div class="flex justify-content-center align-items-center">
+            {{ 'NAME' | translate }}
+
+            <p-columnFilter type="text" field="title" display="menu"></p-columnFilter>
+          </div>
+        </th>
         <th>{{ 'IMAGE' | translate }}</th>
-        <th pSortableColumn="price">{{ 'PRICE' | translate }} <p-sortIcon field="price"></p-sortIcon></th>
-        <th pSortableColumn="category">{{ 'CATEGORY' | translate }} <p-sortIcon field="category"></p-sortIcon></th>
-        <th>{{ 'RATING' | translate }}</th>
+        <th>
+          <div class="flex justify-content-center align-items-center">
+            {{ 'PRICE' | translate
+            }}<p-columnFilter type="numeric" field="price" display="menu" currency="USD"></p-columnFilter>
+          </div>
+        </th>
+        <th>
+          <div class="flex justify-content-center align-items-center">
+            {{ 'CATEGORY' | translate }}
+
+            <p-columnFilter type="text" field="category" display="menu"></p-columnFilter>
+          </div>
+        </th>
+        <th>
+          <div class="flex justify-content-center align-items-center">
+            {{ 'RATING' | translate
+            }}<p-columnFilter type="numeric" field="rating.rate" display="menu"></p-columnFilter>
+          </div>
+        </th>
 
         <th></th>
       </tr>
@@ -122,6 +131,7 @@
         [options]="categories"
         placeholder="Select"
         appendTo="body"
+        [required]="true"
       >
         <ng-template let-option pTemplate="item">
           <span>{{ option }}</span>
@@ -160,4 +170,12 @@
   </ng-template>
 </p-dialog>
 
-<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<p-confirmDialog [breakpoints]="{ '960px': '75vw', '640px': '100vw' }" [style]="{ width: '50vw' }"></p-confirmDialog>
+
+<!-- no items template starts -->
+<div class="m-5" style="text-align: center" *ngIf="!products.length">
+  <p-card [style]="{ background: 'lightblue' }">
+    <h3>{{ 'NO_PRODUCTS' | translate }}</h3>
+  </p-card>
+</div>
+<!-- no items template ends -->

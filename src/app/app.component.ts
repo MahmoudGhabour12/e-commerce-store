@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { Direction } from '@angular/cdk/bidi';
-import { User } from 'models/user';
-import { AuthService } from 'services/auth.service';
 import { PrimeNGConfig } from 'primeng/api';
+
 import { TranslationService } from 'helpers/translation.service';
+import { AuthService } from 'services/auth.service';
+import { User } from 'models/user';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.sass'],
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   title = 'e-commerce-store';
@@ -16,7 +16,8 @@ export class AppComponent implements OnInit {
   languages = [{ name: 'ar' }, { name: 'en' }];
   public isCollapsed = true;
   current: string;
-  uiDirection: Direction | 'auto';
+
+  isLoading: boolean = false;
 
   constructor(
     private primengConfig: PrimeNGConfig,
@@ -27,13 +28,21 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    /**
+     * Get the current language.
+     * Function to change the language.
+     */
+    this.translationService.initializeLanguages();
     this.currentLang();
     this.changeLanguage(this.current);
 
+    /**
+     * Primeng config to enhance design.
+     */
     this.primengConfig.ripple = true;
     this.primengConfig.zIndex = {
       modal: 1100, // dialog, sidebar
-      overlay: 1000, // dropdown, overlaypanel
+      overlay: 1000, // dropdown, overlay panel
       menu: 1000, // overlay menus
       tooltip: 1100, // tooltip
     };
@@ -49,23 +58,20 @@ export class AppComponent implements OnInit {
   /**
    * Change language language.
    */
-  async changeLanguage(language: any) {
+  changeLanguage(language: any) {
     let lang = '';
     lang = language?.value ? language.value : language;
-    console.log('lang', lang);
-    console.log('uiDirection', this.uiDirection);
-    await this.translationService.setLanguage(lang);
-    console.log('setLanguage', this.translationService.setLanguage(lang));
 
-    await this.currentLang();
-    console.log('currentLang', this.currentLang());
-    console.log('bbbbb', this.translationService.language);
+    this.isLoading = true;
+    setTimeout(async () => {
+      this.translationService.setLanguage(lang);
+      this.isLoading = false;
+    }, 100);
   }
 
   /**
    * Gets the ui direction according to the current user display language write direction.
    */
-
   logout() {
     this.authenticationService.logout();
   }

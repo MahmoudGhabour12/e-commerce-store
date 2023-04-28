@@ -4,6 +4,12 @@ import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+import { StoreModule } from '@ngrx/store';
+import { EffectsModule } from '@ngrx/effects';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import * as fromStore from './store';
+import * as fromAppStore from './shared/store';
+
 /* Add support for internationalizations e.g. (currency, date). */
 import { registerLocaleData } from '@angular/common';
 import localeAr from '@angular/common/locales/ar';
@@ -12,12 +18,14 @@ registerLocaleData(localeAr);
 import { TranslateModule, TranslateLoader, MissingTranslationHandler } from '@ngx-translate/core';
 
 import { AppRoutingModule } from './app-routing.module';
+import { environment } from '../environments/environment';
 
 import { AppComponent } from './app.component';
 import { LoginComponent } from './views/login/login.component';
 import { HomeComponent } from './views/home/home.component';
 import { ProductsListComponent } from './views/products-list/products-list.component';
 import { UserProductsListComponent } from './views/user-products-list/user-products-list.component';
+import { GeneralLoaderComponent } from './shared/components/general-loader/general-loader.component';
 
 import { ErrorInterceptor } from 'helpers/error.interceptor';
 import { fakeBackendProvider } from 'helpers/fake-backend';
@@ -38,12 +46,34 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { BlockUIModule } from 'primeng/blockui';
 import { DataViewModule } from 'primeng/dataview';
+import { MessageService } from 'primeng/api';
+import { CardModule } from 'primeng/card';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, HomeComponent, ProductsListComponent, UserProductsListComponent],
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    HomeComponent,
+    ProductsListComponent,
+    UserProductsListComponent,
+    GeneralLoaderComponent,
+  ],
   imports: [
     BrowserModule,
+    StoreModule.forFeature('eCommerce', fromStore.reducers),
+    EffectsModule.forFeature(fromStore.effects),
+    StoreModule.forRoot(fromAppStore.reducers, {
+      runtimeChecks: {
+        strictStateImmutability: true,
+        strictActionImmutability: true,
+        strictStateSerializability: false,
+        strictActionSerializability: false,
+      },
+    }),
+    EffectsModule.forRoot(fromAppStore.effects),
+    StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production }),
     ReactiveFormsModule,
     FormsModule,
     AppRoutingModule,
@@ -62,6 +92,8 @@ import { DataViewModule } from 'primeng/dataview';
     InputTextModule,
     DataViewModule,
     SelectButtonModule,
+    BlockUIModule,
+    CardModule,
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -85,6 +117,7 @@ import { DataViewModule } from 'primeng/dataview';
 
     // provider used to create fake backend
     fakeBackendProvider,
+    MessageService,
   ],
   bootstrap: [AppComponent],
 })

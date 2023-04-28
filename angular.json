@@ -9,7 +9,8 @@
         "@schematics/angular:component": {
           "skipImport": true,
           "inlineStyle": true,
-          "skipTests": true
+          "skipTests": true,
+          "style": "scss"
         },
         "@schematics/angular:class": {
           "skipTests": true
@@ -55,7 +56,7 @@
               "node_modules/primeng/resources/themes/lara-light-blue/theme.css",
               "node_modules/primeng/resources/primeng.min.css",
               "./node_modules/flag-icons/css/flag-icons.min.css",
-              "src/styles.sass"
+              "src/styles.scss"
             ],
             "scripts": []
           },

@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, tap } from 'rxjs';
+import { Store, select } from '@ngrx/store';
 
-import { Product } from 'models/product-model';
-import { ProductService } from 'services/product.service';
+import { Product } from 'models/product.model';
+import * as fromStore from '../../store';
 
 @Component({
   selector: 'app-user-products-list',
@@ -11,18 +12,13 @@ import { ProductService } from 'services/product.service';
 })
 export class UserProductsListComponent implements OnInit, OnDestroy {
   sortOptions: { label: string; value: string }[];
-
   sortOrder: number;
-
   sortField: string;
   products: Product[];
-
   categoryProducts: Product[];
-
   categories: [];
   firstCategory: string;
-
-  loading: boolean;
+  isLoading: boolean;
 
   /**
    * The set of subscriptions on this components,
@@ -30,10 +26,10 @@ export class UserProductsListComponent implements OnInit, OnDestroy {
    */
   subscriptions = new Subscription();
 
-  constructor(private productService: ProductService) {}
+  constructor(private fromStore$: Store<fromStore.ConfigurationsState>) {}
 
   ngOnInit() {
-    this.loading = true;
+    this.isLoading = true;
 
     this.sortOptions = [
       { label: 'Price High to Low', value: '!price' },
@@ -50,39 +46,84 @@ export class UserProductsListComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
+  /**
+   * Function to detect changes when sort table.
+   */
   onSortChange(event) {
     let value = event.value;
+    setTimeout(() => {
+      if (value.indexOf('!') === 0) {
+        this.sortOrder = -1;
+        this.sortField = value.substring(1, value.length);
+      } else {
+        this.sortOrder = 1;
+        this.sortField = value;
+      }
+      this.isLoading = false;
+    }, 300);
 
-    if (value.indexOf('!') === 0) {
-      this.sortOrder = -1;
-      this.sortField = value.substring(1, value.length);
-    } else {
-      this.sortOrder = 1;
-      this.sortField = value;
-    }
+    this.isLoading = true;
   }
 
+  /**
+   * Display products depends on selected category.
+   */
   showProducts() {
     this.subscriptions.add(
-      this.productService.getCategories().subscribe((categories) => {
-        this.categories = categories;
-        this.productService.getProducts().subscribe((products) => {
-          this.categoryProducts = products;
-          let index = 0;
-          if (this.categories) {
-            this.products = this.getCategoryProducts(this.categories[index]);
-            this.loading = false;
-          }
-        });
-      })
+      this.fromStore$
+        .pipe(
+          select(fromStore.getCategories),
+          tap((categories) => {
+            if (categories) {
+              this.categories = categories;
+              this.fromStore$
+                .pipe(
+                  select(fromStore.getProducts),
+                  tap((products) => {
+                    if (products) {
+                      this.categoryProducts = products;
+                      let index = 0;
+                      if (this.categories) {
+                        this.products = this.getCategoryProducts(this.categories[index]);
+                        this.isLoading = false;
+                      }
+                    }
+                  })
+                )
+                .subscribe();
+            }
+          })
+        )
+        .subscribe()
     );
+
+    this.fromStore$.dispatch(fromStore.SearchCategories({}));
+    this.fromStore$.dispatch(fromStore.SearchProducts());
   }
 
-  getCategoryProducts(category: string) {
-    this.products = this.categoryProducts.filter((product: Product) => {
-      return product.category === category;
-    });
+  /**
+   * Handles search parameters change.
+   */
+  search() {
+    setTimeout(() => {
+      this.isLoading = false;
+    }, 100);
 
+    this.isLoading = true;
+  }
+
+  /**
+   * Get products of current category.
+   */
+  getCategoryProducts(category: string) {
+    setTimeout(() => {
+      this.products = this.categoryProducts.filter((product: Product) => {
+        this.isLoading = false;
+        return product.category === category;
+      });
+    }, 300);
+
+    this.isLoading = true;
     return this.products;
   }
 }

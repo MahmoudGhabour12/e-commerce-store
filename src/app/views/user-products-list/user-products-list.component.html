@@ -1,15 +1,14 @@
 <div class="card">
   <p-toolbar>
     <div class="p-toolbar-group-start">
-      <span *ngFor="let category of categories">
-        <p-button
-          (click)="getCategoryProducts(category)"
-          [label]="category"
-          icon="pi pi-tag product-category-icon"
-          class="m-1"
-        >
-        </p-button>
-      </span>
+      <div class="row">
+        <div class="form-group col-12 d-flex justify-content-between flex-column flex-sm-row m-2">
+          <div *ngFor="let category of categories" class="m-1">
+            <p-button (click)="getCategoryProducts(category)" [label]="category" icon="pi pi-tag product-category-icon">
+            </p-button>
+          </div>
+        </div>
+      </div>
     </div>
   </p-toolbar>
 
@@ -24,24 +23,26 @@
     layout="list"
   >
     <ng-template pTemplate="header">
-      <div class="d-flex justify-content-between">
-        <p-dropdown
-          [options]="sortOptions"
-          placeholder="{{ 'SORT_BY_PRICE' | translate }}"
-          (onChange)="onSortChange($event)"
-          styleClass="mb-2 md:mb-0"
-        ></p-dropdown>
-        <span class="p-input-icon-left mb-2 md:mb-0">
-          <i class="pi pi-search"></i>
-          <input
-            type="search"
-            pInputText
-            placeholder="{{ 'SEARCH_BY_NAME' | translate }}"
-            (input)="dv.filter($event.target.value)"
-          />
-        </span>
+      <div class="row">
+        <div class="form-group col-12 d-flex justify-content-between flex-column flex-sm-row m-2">
+          <p-dropdown
+            [options]="sortOptions"
+            placeholder="{{ 'SORT_BY_PRICE' | translate }}"
+            (onChange)="onSortChange($event)"
+            styleClass="mb-2 md:mb-0"
+          ></p-dropdown>
+          <span class="p-input-icon-left mb-2 md:mb-0">
+            <i class="pi pi-search"></i>
+            <input
+              type="search"
+              pInputText
+              placeholder="{{ 'SEARCH_BY_NAME' | translate }}"
+              (input)="search(); dv.filter($event.target.value)"
+            />
+          </span>
 
-        <p-dataViewLayoutOptions></p-dataViewLayoutOptions>
+          <p-dataViewLayoutOptions></p-dataViewLayoutOptions>
+        </div>
       </div>
     </ng-template>
     <ng-template let-product pTemplate="listItem">
@@ -81,3 +82,7 @@
     </ng-template>
   </p-dataView>
 </div>
+
+<p-blockUI [blocked]="isLoading" [target]="dv">
+  <i class="pi pi-spin pi-spinner" style="font-size: 10rem"></i>
+</p-blockUI>

@@ -32,11 +32,14 @@
           </p-selectButton>
         </li>
         <li class="nav-item">
-          <a class="nav-link m-2 menu-item nav-active" (click)="logout()">{{ 'LOGOUT' | translate }}</a>
+          <a class="nav-link m-2" style="cursor: pointer" (click)="logout()">{{ 'LOGOUT' | translate }}</a>
         </li>
       </ul>
     </div>
   </nav>
-  <!-- main app container -->
-  <router-outlet></router-outlet>
+  <!-- nav ends -->
+
+  <router-outlet #layout></router-outlet>
+
+  <app-general-loader [isLoading]="isLoading"> </app-general-loader>
 </div>

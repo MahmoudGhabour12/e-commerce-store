@@ -1,36 +1,30 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, skip, tap } from 'rxjs';
+import { Store, select } from '@ngrx/store';
 
-import { ConfirmationService, LazyLoadEvent, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
-import { User } from 'models/user';
-import { Product } from 'models/product-model';
-import { ProductService } from 'services/product.service';
+import * as fromStore from '../../store';
+
+import { Product } from 'models/product.model';
 import { TranslationService } from 'helpers/translation.service';
 
 @Component({
   selector: 'app-products-list',
   templateUrl: './products-list.component.html',
-  styleUrls: ['./products-list.component.sass'],
+  styleUrls: ['./products-list.component.scss'],
   providers: [MessageService, ConfirmationService],
 })
 export class ProductsListComponent implements OnInit, OnDestroy {
-  loading = false;
-  users: User[] = [];
-
+  loading: boolean;
   productDialog: boolean;
   displayDeleteDialog: boolean;
   products: Product[];
   dataSource: Product[];
-
   categories: [];
-
   product: Product;
-
   selectedProducts: Product[];
-
   submitted: boolean;
-
   totalRecords: number;
 
   /**
@@ -40,27 +34,119 @@ export class ProductsListComponent implements OnInit, OnDestroy {
   subscriptions = new Subscription();
 
   constructor(
-    private productService: ProductService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private fromStore$: Store<fromStore.ConfigurationsState>
   ) {}
 
   ngOnInit() {
     this.loading = true;
 
+    /**
+     * Get the System categories.
+     */
     this.subscriptions.add(
-      this.productService.getProducts().subscribe((products) => {
-        this.dataSource = products;
-        this.totalRecords = products.length;
-        this.loading = false;
-      })
+      this.fromStore$
+        .pipe(
+          select(fromStore.getCategories),
+          tap((categories) => {
+            if (categories) {
+              this.categories = categories;
+            }
+          })
+        )
+        .subscribe()
+    );
+    this.fromStore$.dispatch(fromStore.SearchCategories({}));
+
+    /**
+     * Get the System products.
+     */
+    this.subscriptions.add(
+      this.fromStore$
+        .pipe(
+          select(fromStore.getProducts),
+          tap((products) => {
+            if (products) {
+              this.products = products;
+
+              this.totalRecords = products.length;
+              this.loading = false;
+            }
+          })
+        )
+        .subscribe()
     );
 
+    this.fromStore$.dispatch(fromStore.SearchProducts());
+
+    /**
+     * Display toaster after update product completed.
+     */
     this.subscriptions.add(
-      this.productService.getCategories().subscribe((categories) => {
-        this.categories = categories;
-      })
+      this.fromStore$
+        .pipe(
+          select(fromStore.getSelectedProductUpdateCompleted),
+          skip(1),
+          tap((updated) => {
+            if (updated) {
+              this.messageService.add({
+                severity: 'success',
+                summary: this.translationService.translate('SUCCESSFUL'),
+                detail: this.translationService.translate('UPDATE_MESSAGE'),
+                life: 3000,
+              });
+              this.productDialog = false;
+            }
+          })
+        )
+        .subscribe()
+    );
+
+    /**
+     * Display toaster after create product completed.
+     */
+    this.subscriptions.add(
+      this.fromStore$
+        .pipe(
+          select(fromStore.getSelectedProductCreateCompleted),
+          skip(1),
+          tap((create) => {
+            if (create) {
+              this.messageService.add({
+                severity: 'success',
+                summary: this.translationService.translate('SUCCESSFUL'),
+                detail: this.translationService.translate('CREATE_MESSAGE'),
+                life: 3000,
+              });
+              this.productDialog = false;
+            }
+          })
+        )
+        .subscribe()
+    );
+
+    /**
+     * Display toaster after delete product completed.
+     */
+    this.subscriptions.add(
+      this.fromStore$
+        .pipe(
+          select(fromStore.getSelectedProductDeleteCompleted),
+          skip(1),
+          tap((deleted) => {
+            if (deleted) {
+              this.messageService.add({
+                severity: 'warn',
+                summary: this.translationService.translate('SUCCESSFUL'),
+                detail: this.translationService.translate('DELETE_MESSAGE'),
+                life: 3000,
+              });
+            }
+          })
+        )
+        .subscribe()
     );
   }
 
@@ -71,12 +157,18 @@ export class ProductsListComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
-  openNew() {
+  /**
+   * Add new product.
+   */
+  addProduct() {
     this.product = {};
     this.submitted = false;
     this.productDialog = true;
   }
 
+  /**
+   * Delete the current selected products.
+   */
   deleteSelectedProducts() {
     this.confirmationService.confirm({
       message: this.translationService.translate('DELETE_CONFIRM_TITLE'),
@@ -86,10 +178,10 @@ export class ProductsListComponent implements OnInit, OnDestroy {
         this.products = this.products.filter((val) => !this.selectedProducts.includes(val));
         this.selectedProducts = null;
         this.messageService.add({
-          severity: this.translationService.translate('SUCCESS'),
+          severity: 'warn',
           summary: this.translationService.translate('SUCCESSFUL'),
-          detail: this.translationService.translate('DELETE_MESSAGE'),
-          life: 3000,
+          detail: this.translationService.translate('DELETE_PRODUCTS_MESSAGE'),
+          life: 4000,
         });
       },
     });
@@ -100,6 +192,9 @@ export class ProductsListComponent implements OnInit, OnDestroy {
     this.productDialog = true;
   }
 
+  /**
+   * Delete the selected product.
+   */
   deleteProduct(product: Product) {
     this.confirmationService.confirm({
       message: this.translationService.translate('DELETE_SELECTED_CONFIRM_TITLE', {
@@ -108,16 +203,21 @@ export class ProductsListComponent implements OnInit, OnDestroy {
       header: this.translationService.translate('DELETE_CONFIRM_HEADER'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products = this.products.filter((val) => val.id !== product.id);
+        this.confirmDelete(product.id);
         this.product = {};
-        this.messageService.add({
-          severity: this.translationService.translate('SUCCESS'),
-          summary: this.translationService.translate('SUCCESSFUL'),
-          detail: this.translationService.translate('DELETE_MESSAGE'),
-          life: 3000,
-        });
       },
     });
+  }
+
+  /**
+   * Confirm the Delete action.
+   */
+  confirmDelete(id: number) {
+    this.fromStore$.dispatch(
+      fromStore.DeleteProduct({
+        id,
+      })
+    );
   }
 
   hideDialog() {
@@ -125,33 +225,43 @@ export class ProductsListComponent implements OnInit, OnDestroy {
     this.submitted = false;
   }
 
+  /**
+   * Function to add product or to edit the current product.
+   */
   saveProduct() {
     this.submitted = true;
 
     if (this.product.title?.trim()) {
       if (this.product.id) {
-        this.products[this.findIndexById(this.product.id)] = this.product;
-        this.messageService.add({
-          severity: this.translationService.translate('SUCCESS'),
-          summary: this.translationService.translate('SUCCESSFUL'),
-          detail: this.translationService.translate('UPDATE_MESSAGE'),
-          life: 3000,
-        });
+        this.fromStore$.dispatch(
+          fromStore.UpdateProduct({
+            id: this.product.id,
+            title: this.product.title,
+            category: this.product.category,
+            price: this.product.price,
+            image: this.product.image,
+          })
+        );
       } else {
+        let rating;
         this.product.id = this.products.length + 1;
         this.product.image = 'https://fakestoreapi.com/img/61IBBVJvSDL._AC_SY879_.jpg';
-        this.product.rating = { rate: 5, count: 1 };
-        this.products.push(this.product);
-        this.messageService.add({
-          severity: this.translationService.translate('SUCCESS'),
-          summary: this.translationService.translate('SUCCESSFUL'),
-          detail: this.translationService.translate('CREATE_MESSAGE'),
-          life: 3000,
-        });
-      }
+        rating = this.product.rating = { rate: 5, count: 1 };
 
+        this.fromStore$.dispatch(
+          fromStore.CreateProduct({
+            id: this.product.id,
+            title: this.product.title,
+            category: this.product.category,
+            price: this.product.price,
+            image: this.product.image,
+            rating,
+          })
+        );
+      }
       this.products = [...this.products];
       this.productDialog = false;
+
       this.product = {};
     }
   }
@@ -164,17 +274,6 @@ export class ProductsListComponent implements OnInit, OnDestroy {
         break;
       }
     }
-
     return index;
-  }
-
-  loadProducts(event: LazyLoadEvent) {
-    this.loading = true;
-    setTimeout(() => {
-      if (this.dataSource) {
-        this.products = this.dataSource.slice(event.first, event.first + event.rows);
-        this.loading = false;
-      }
-    }, 1000);
   }
 }

@@ -29,6 +29,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loading = true;
+
+    /**
+     * Get the current logged in user.
+     */
     this.subscriptions.add(
       this.authenticationService
         .getById(this.user.id)
@@ -47,6 +51,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
+  /**
+   * Check if the current logged in user is admin or not.
+   */
   get isAdmin() {
     return this.user && this.user.role === Role.Admin;
   }
